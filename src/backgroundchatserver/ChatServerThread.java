@@ -20,8 +20,9 @@ public class ChatServerThread extends Thread {
    private Socket           socket    = null;
    private int              ID        = -1;
    private DataInputStream  streamIn  =  null;
+   private ObjectInputStream inObj = null;
    private DataOutputStream streamOut = null;
-   private ObjectOutputStream outObj;
+   private ObjectOutputStream outObj = null;
    private ChatMessage chatMessage;
 
    public ChatServerThread(ChatServer server, Socket socket) {
@@ -36,7 +37,7 @@ public class ChatServerThread extends Thread {
         chatMessage = new ChatMessage();
         while (true) {
             try {
-                chatMessage = (ChatMessage) new ObjectInputStream(streamIn).readObject();;
+                chatMessage = (ChatMessage) inObj.readObject();;
                 server.handle(ID, chatMessage);
             } catch(IOException ioe) {
                 System.out.println(ID + " ERROR reading: " + ioe.getMessage());
@@ -50,10 +51,11 @@ public class ChatServerThread extends Thread {
    
    //Here we send messages
    public void sendMessage(ChatMessage chatMessage) {
+       System.out.println("Sending a message...");
        try {
-           ObjectOutputStream oos = new ObjectOutputStream(streamOut);
-           oos.writeObject(chatMessage);
-           oos.flush();
+           
+           outObj.writeObject(chatMessage);
+           outObj.flush();
 
        } catch (IOException ex) {
            Logger.getLogger(ChatServerThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -66,8 +68,12 @@ public class ChatServerThread extends Thread {
     
     public void open() {
        try {
-           streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
            streamOut = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+           outObj = new ObjectOutputStream(streamOut);
+           outObj.flush();
+           streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+           inObj = new ObjectInputStream(streamIn);
+           
        } catch (IOException ex) {
            Logger.getLogger(ChatServerThread.class.getName()).log(Level.SEVERE, null, ex);
        }

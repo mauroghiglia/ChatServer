@@ -12,6 +12,8 @@ import java.io.Serializable;
  * @author MGhigl
  */
 public class ChatMessage implements Serializable {
+    
+    private int msgType = 0;
     private String msg;
     private String ipAddress;
     private String toIPAddress;
@@ -23,10 +25,20 @@ public class ChatMessage implements Serializable {
         this.msg = msg;
     }
     
+    //This constructor is mainly for system messages
+    public ChatMessage(int msgType, String msg) {
+        this.msgType = msgType;
+        this.msg = msg;
+    }
+    
     public ChatMessage(String msg, String ipAddress, String toIPAddress) {
         this.msg = msg;
         this.ipAddress = ipAddress;
         this.toIPAddress = toIPAddress;
+    }
+    
+    public int getMsgType() {
+        return msgType;
     }
 
     public String getMsg() {

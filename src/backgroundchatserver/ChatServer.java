@@ -16,12 +16,10 @@ import javafx.application.Platform;
 
 
 public class ChatServer implements Runnable {
-    
     private HashMap<Integer, ConnectedClient> connectedClients = new HashMap<>();
     private int maxConnections = 2;
     private ServerSocket serverSocket = null;
     private Thread listeningServerThread = null;
-    private ChatMessage chatMessage;
     
     public ChatServer(int port) {
         try {
@@ -67,15 +65,19 @@ public class ChatServer implements Runnable {
     }
     
     public synchronized void handle(int ID, ChatMessage chatMessage) {
+        ConnectedClient client = connectedClients.get(ID);
+        ChatServerThread clientThread = client.getChatServerThread();
+        String IPAddress = connectedClients.get(ID).getIpAddress();
         if (chatMessage.getMsg().equals(".bye")) {
-            connectedClients.get(ID).getChatServerThread().sendMessage(new ChatMessage(".bye"));
+            clientThread.sendMessage(new ChatMessage(".bye"));
             remove(ID); 
         } else  {
-            connectedClients.get(ID).getChatServerThread()
-                    .sendMessage(new ChatMessage(
-                            "Answer from server: \n" + chatMessage.getMsg()
-                    ));
-            sendMessage(chatMessage, ID);
+            switch(chatMessage.getMsgType()) {
+            case 1  :   System.out.println("Got IP address...");
+                        client.setIpAddress(chatMessage.getMsg());
+                        break;
+            default :   clientThread.sendMessage(new ChatMessage(IPAddress + ": " + chatMessage.getMsg()));
+            }
         }
     }
     
