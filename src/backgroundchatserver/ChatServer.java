@@ -71,10 +71,30 @@ public class ChatServer implements Runnable {
         StringBuilder listBuilder = new StringBuilder();
         
         if(chatMessage.getMsgType() == 0) {
-            System.out.println("Received a normal message: " + chatMessage.getMsg());
+            System.out.println("Received a normal message of type: " 
+                    + chatMessage.getMsgType());
+            System.out.println("From IP: " + chatMessage.getIpAddress());
+            System.out.println("To IP: " + chatMessage.getToIPAddress());
+            System.out.println("Content: " + chatMessage.getMsg());
             
-            //For now system sends back message
-            clientThread.sendMessage(chatMessage);
+            Optional<ConnectedClient> destClient = connectedClients
+                                    .entrySet()
+                                    .stream()
+                                    .filter(e -> e.getValue()
+                                            .getIpAddress()
+                                            .equals(chatMessage
+                                            .getToIPAddress()))
+                                    .map(Map.Entry::getValue)
+                                    .findFirst();
+            try{
+                System.out.println("Destination IP " 
+                        + destClient.get().getIpAddress());
+                ChatServerThread destThread = destClient.get()
+                        .getChatServerThread();
+                destThread.sendMessage(chatMessage);
+            } catch(NoSuchElementException e) {
+                System.out.println("This IP is not connected");
+            }
         } else if(chatMessage.getMsgType() == 1) {
             switch(chatMessage.getMsg()) {
                 case "HELLO":
