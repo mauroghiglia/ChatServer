@@ -51,7 +51,6 @@ public class ChatServerThread extends Thread {
    
    //Here we send messages
    public void sendMessage(ChatMessage chatMessage) {
-       System.out.println("Sending a message...");
        try {
            
            outObj.writeObject(chatMessage);

@@ -22,6 +22,7 @@ public class ChatMessage implements Serializable {
     }
 
     public ChatMessage(String msg) {
+        this.msgType = 0;
         this.msg = msg;
     }
     
@@ -29,6 +30,13 @@ public class ChatMessage implements Serializable {
     public ChatMessage(int msgType, String msg) {
         this.msgType = msgType;
         this.msg = msg;
+    }
+    
+    //Constructor for IP exchange between server and client
+    public ChatMessage(int msgType, String msg, String IPAddress) {
+        this.msgType = msgType;
+        this.msg = msg;
+        this.ipAddress = IPAddress;
     }
     
     public ChatMessage(String msg, String ipAddress, String toIPAddress) {
@@ -39,6 +47,10 @@ public class ChatMessage implements Serializable {
     
     public int getMsgType() {
         return msgType;
+    }
+    
+    public void setMsgType(int type) {
+        this.msgType = type;
     }
 
     public String getMsg() {

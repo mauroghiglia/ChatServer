@@ -68,17 +68,51 @@ public class ChatServer implements Runnable {
         ConnectedClient client = connectedClients.get(ID);
         ChatServerThread clientThread = client.getChatServerThread();
         String IPAddress = connectedClients.get(ID).getIpAddress();
-        if (chatMessage.getMsg().equals(".bye")) {
-            clientThread.sendMessage(new ChatMessage(".bye"));
-            remove(ID); 
-        } else  {
-            switch(chatMessage.getMsgType()) {
-            case 1  :   System.out.println("Got IP address...");
-                        client.setIpAddress(chatMessage.getMsg());
-                        break;
-            default :   clientThread.sendMessage(new ChatMessage(IPAddress + ": " + chatMessage.getMsg()));
+        StringBuilder listBuilder = new StringBuilder();
+        
+        if(chatMessage.getMsgType() == 0) {
+            System.out.println("Received a normal message: " + chatMessage.getMsg());
+            
+            //For now system sends back message
+            clientThread.sendMessage(chatMessage);
+        } else if(chatMessage.getMsgType() == 1) {
+            switch(chatMessage.getMsg()) {
+                case "HELLO":
+                    System.out.println("Handshake: asking for IP...");
+                    clientThread.sendMessage(new ChatMessage(1, "YOURIP"));
+                    break;
+                    
+                case "MYIP":
+                    System.out.println("User is sending IP address...");
+                    client.setIpAddress(chatMessage.getIpAddress());
+//                    prepClientList();
+                    break;  
+                    
+                case "LIST":
+                    //Code to return list of connected users (IPs)
+                    System.out.println("User is requesting connected users list...");
+                    System.out.println("Sending connected users list...");
+                    clientThread.sendMessage(new ChatMessage(1, "IPLIST", prepClientList(IPAddress)));
+                    break;    
+                    
+                case "QUIT": 
+                    System.out.println("User wants to quit...");
+                    clientThread.sendMessage(new ChatMessage(1, "DISCONNECT"));
+                    remove(ID);
+                    break;
             }
         }
+//        if (chatMessage.getMsg().equals(".bye")) {
+//            clientThread.sendMessage(new ChatMessage(".bye"));
+//            remove(ID); 
+//        } else  {
+//            switch(chatMessage.getMsgType()) {
+//            case 1  :   System.out.println("Got IP address...");
+//                        client.setIpAddress(chatMessage.getMsg());
+//                        break;
+//            default :   clientThread.sendMessage(new ChatMessage(IPAddress + ": " + chatMessage.getMsg()));
+//            }
+//        }
     }
     
     public synchronized void sendMessage(ChatMessage chatMessage, int ID) {
@@ -105,12 +139,26 @@ public class ChatServer implements Runnable {
             connectedClients.put(ID, connectedClient);
             connectedClient.getChatServerThread().open();
             connectedClient.getChatServerThread().start();
-            System.out.println("Sending hello...");
-            connectedClient.getChatServerThread().sendMessage(new ChatMessage("Hello from server...")); 
+            
+            //NEW: handshake process start
+            System.out.println("Handshake start: Sending hello...");
+            connectedClient.getChatServerThread().sendMessage(new ChatMessage(1, "HELLO")); 
         } else {
             System.out.println("Client refused: maximum " + maxConnections + " reached.");
         }
-        
     }
     
+    private String prepClientList(String currentIP) {
+        StringBuilder list = new StringBuilder("Connected clients: \n");
+        connectedClients.forEach((k, v) -> {
+            System.out.println(k + " : " + v.getIpAddress());
+            if(v.getIpAddress() == currentIP) {
+                list.append(v.getIpAddress() + " (you)\n");
+            } else {
+                list.append(v.getIpAddress() + "\n");
+            }
+        });
+        
+        return list.toString();
+    }
 }
