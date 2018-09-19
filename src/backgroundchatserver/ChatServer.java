@@ -67,15 +67,16 @@ public class ChatServer implements Runnable {
     public synchronized void handle(int ID, ChatMessage chatMessage) {
         ConnectedClient client = connectedClients.get(ID);
         ChatServerThread clientThread = client.getChatServerThread();
-        String IPAddress = connectedClients.get(ID).getIpAddress();
-        StringBuilder listBuilder = new StringBuilder();
+        String IPAddress = client.getIpAddress();
+        String destIP = "";
+        String respMsg = "";
         
         if(chatMessage.getMsgType() == 0) {
-            System.out.println("Received a normal message of type: " 
-                    + chatMessage.getMsgType());
-            System.out.println("From IP: " + chatMessage.getIpAddress());
-            System.out.println("To IP: " + chatMessage.getToIPAddress());
-            System.out.println("Content: " + chatMessage.getMsg());
+//            System.out.println("Received a normal message of type: " 
+//                    + chatMessage.getMsgType());
+//            System.out.println("From IP: " + chatMessage.getIpAddress());
+//            System.out.println("To IP: " + chatMessage.getToIPAddress());
+//            System.out.println("Content: " + chatMessage.getMsg());
             
             Optional<ConnectedClient> destClient = connectedClients
                                     .entrySet()
@@ -86,11 +87,13 @@ public class ChatServer implements Runnable {
                                             .getToIPAddress()))
                                     .map(Map.Entry::getValue)
                                     .findFirst();
-            try{
-                System.out.println("Destination IP " 
-                        + destClient.get().getIpAddress());
+            try {
+                destIP = destClient.get().getIpAddress();
+                System.out.println("Destination IP " + destIP);
                 ChatServerThread destThread = destClient.get()
                         .getChatServerThread();
+                respMsg = "Message from:" + destIP + "\n\t" + chatMessage.getMsg();
+                chatMessage.setMsg(respMsg);
                 destThread.sendMessage(chatMessage);
             } catch(NoSuchElementException e) {
                 System.out.println("This IP is not connected");
@@ -105,14 +108,16 @@ public class ChatServer implements Runnable {
                 case "MYIP":
                     System.out.println("User is sending IP address...");
                     client.setIpAddress(chatMessage.getIpAddress());
-//                    prepClientList();
                     break;  
                     
                 case "LIST":
-                    //Code to return list of connected users (IPs)
                     System.out.println("User is requesting connected users list...");
                     System.out.println("Sending connected users list...");
-                    clientThread.sendMessage(new ChatMessage(1, "IPLIST", prepClientList(IPAddress)));
+
+                    connectedClients.forEach((k, v) -> {
+                        v.getChatServerThread().sendMessage(new ChatMessage(1, "IPLIST", prepClientList(v.getIpAddress())));
+                    });
+//                    clientThread.sendMessage(new ChatMessage(1, "IPLIST", prepClientList(IPAddress)));
                     break;    
                     
                 case "QUIT": 
@@ -122,17 +127,6 @@ public class ChatServer implements Runnable {
                     break;
             }
         }
-//        if (chatMessage.getMsg().equals(".bye")) {
-//            clientThread.sendMessage(new ChatMessage(".bye"));
-//            remove(ID); 
-//        } else  {
-//            switch(chatMessage.getMsgType()) {
-//            case 1  :   System.out.println("Got IP address...");
-//                        client.setIpAddress(chatMessage.getMsg());
-//                        break;
-//            default :   clientThread.sendMessage(new ChatMessage(IPAddress + ": " + chatMessage.getMsg()));
-//            }
-//        }
     }
     
     public synchronized void sendMessage(ChatMessage chatMessage, int ID) {
@@ -148,7 +142,7 @@ public class ChatServer implements Runnable {
             System.out.println("Error closing thread: " + ioe); 
         }
         toTerminate.stop(); 
-        }
+    }
     
     private void addThread(Socket socket) {
         int ID = socket.getPort();
@@ -178,7 +172,6 @@ public class ChatServer implements Runnable {
                 list.append(v.getIpAddress() + "\n");
             }
         });
-        
         return list.toString();
     }
 }
