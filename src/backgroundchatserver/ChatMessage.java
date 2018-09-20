@@ -17,6 +17,15 @@ public class ChatMessage implements Serializable {
     private String msg;
     private String ipAddress;
     private String toIPAddress;
+    private boolean srvMsg;
+
+    public boolean isRcvdMsg() {
+        return srvMsg;
+    }
+
+    public void setRcvdMsg(boolean srvMsg) {
+        this.srvMsg = srvMsg;
+    }
 
     public ChatMessage() {
     }
