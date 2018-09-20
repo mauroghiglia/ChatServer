@@ -68,9 +68,12 @@ public class ChatServer implements Runnable {
         ConnectedClient client = connectedClients.get(ID);
         ChatServerThread clientThread = client.getChatServerThread();
         String destIP = "";
-        String respMsg = "";
         
-        if(chatMessage.getMsgType() == 0) {        
+        if(chatMessage.getMsgType() == 0) {  
+            /*
+             * Server received a normal message
+             * and is sending it to destination IP
+             */
             Optional<ConnectedClient> destClient = connectedClients
                                     .entrySet()
                                     .stream()
@@ -81,13 +84,15 @@ public class ChatServer implements Runnable {
                                     .map(Map.Entry::getValue)
                                     .findFirst();
             try {
-                System.out.println("Destination IP " + destClient.get().getIpAddress());
-                chatMessage.setMsg("Message from:" + destIP + "\n\t" + chatMessage.getMsg());
                 destClient.get().getChatServerThread().sendMessage(chatMessage);
             } catch(NoSuchElementException e) {
                 System.out.println("This IP is not connected");
             }
         } else if(chatMessage.getMsgType() == 1) {
+            /*
+             * Type 1 messages are system messages mostly
+             * used for handshake
+             */
             switch(chatMessage.getMsg()) {
                 case "HELLO":
                     System.out.println("Handshake: asking for IP...");
@@ -103,7 +108,8 @@ public class ChatServer implements Runnable {
                     System.out.println("User is requesting connected users list...");
                     System.out.println("Sending connected users list...");
                     connectedClients.forEach((k, v) -> {
-                        v.getChatServerThread().sendMessage(new ChatMessage(1, "IPLIST", prepClientList(v.getIpAddress())));
+                        v.getChatServerThread().sendMessage(new ChatMessage(1, "IPLIST",
+                                prepClientList(v.getIpAddress())));
                     });
 //                    clientThread.sendMessage(new ChatMessage(1, "IPLIST", prepClientList(IPAddress)));
                     break;    
