@@ -8,6 +8,7 @@ package backgroundchatserver;
 /**
  *
  * @author MGhigl
+ * Version 1.1.1
  */
 public class BackgroundChatServer {
 
